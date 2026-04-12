@@ -70,19 +70,19 @@ export default function ContactPage() {
     fetchSettings();
   }, [API_BASE]);
 
-  const supportEmail = settings.support_email || "info@gahto.org.ng";
+  const supportEmail = settings.support_email || "info@gahto.org";
   const facebookUrl =
     settings.facebook_url ||
     "https://web.facebook.com/globalantihumantraffickingorganization";
-  const twitterUrl = settings.twitter_url || "https://x.com/";
+  const twitterUrl = settings.twitter_url || "https://x.com/GlobalAntiHT?t=j-V9QBzznVCRxSLMrBfLTA&s=09";
   const whatsappNumber = settings.whatsapp_number || "+22371402809";
   const nigeriaOfficePhone = settings.nigeria_office_phone || "+2348050280248";
   const maliOfficePhone = settings.mali_office_phone || "+22371402809";
 
   const whatsappHref = useMemo(() => {
     const sanitized = whatsappNumber.replace(/[^\d]/g, "");
-    return `https://wa.me/${sanitized}?text=Thank%20you%20for%20contacting%20Global%20Anti%20Human%20Trafficking%20Organisation.%20How%20can%20we%20help%20you%20today%3F`;
-  }, [whatsappNumber]);
+    const text = encodeURIComponent("Hello GAHTO, I would like to make an inquiry.");
+    return `https://wa.me/${sanitized}?text=${text}`;}, [whatsappNumber]);
 
   const handleSubmitMessage = async (e: FormEvent) => {
     e.preventDefault();

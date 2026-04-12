@@ -18,6 +18,12 @@ import {
 export default function HelpPage() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
+  const buildWhatsAppLink = (message: string) => {
+    const whatsappNumber = "22371402809";
+    const sanitized = whatsappNumber.replace(/[^\d]/g, "");
+    return `https://wa.me/${sanitized}?text=${encodeURIComponent(message)}`;
+  };
+
   const handleEscape = () => {
     window.location.replace("https://www.google.com");
   };
@@ -35,12 +41,12 @@ export default function HelpPage() {
     },
     {
       title: "Reach out for support",
-      desc: "Use call, WhatsApp, or other safe channels to contact help immediately.",
+      desc: "Use call, WhatsApp, or other safe channels to contact us for help immediately.",
       icon: PhoneCall,
     },
     {
       title: "Share your location",
-      desc: "If safe, send your live location or nearest landmark to someone trusted.",
+      desc: "If safe, send your live location or nearest landmark to us.",
       icon: ArrowRight,
     },
     {
@@ -98,7 +104,7 @@ export default function HelpPage() {
               </button>
 
               <a
-                href="https://wa.me/22371402809?text=Thank%20you%20for%20contacting%2C%20Globali%20Anti%20Human%20Trafficking%20Organization.%20How%20can%20we%20be%20of%20help%20to%20you%20?"
+                href={buildWhatsAppLink("Thank you for contacting, Global Anti Human Trafficking Organization. How can we be of help to you ?")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-6 py-3.5 text-white font-semibold shadow-lg shadow-green-500/20 transition hover:bg-green-600 hover:-translate-y-0.5"
@@ -158,7 +164,7 @@ export default function HelpPage() {
             </button>
 
             <a
-              href="https://wa.me/22371402809?text=Thank%20you%20for%20contacting%2C%20Globali%20Anti%20Human%20Trafficking%20Organization.%20How%20can%20we%20be%20of%20help%20to%20you%20?"
+              href={buildWhatsAppLink("Hello GAHTO, I would like to make an inquiry.")}
               target="_blank"
               rel="noopener noreferrer"
               className="group rounded-2xl border border-green-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300"
