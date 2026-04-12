@@ -1,6 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import {
+  MessageCircleHeart,
+  PhoneCall,
+  ShieldAlert,
+  Siren,
+  HeartHandshake,
+  LifeBuoy,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
+
+type NewsItem = {
+  id: number;
+  title: string;
+  slug: string;
+  headline?: string | null;
+  excerpt?: string | null;
+  content: string;
+  category: string;
+  featured_image_url?: string | null;
+  video_url?: string | null;
+  external_link?: string | null;
+  is_featured: boolean;
+  show_in_ticker: boolean;
+  ticker_order: number;
+  status: string;
+  published_at?: string | null;
+  created_by_admin_id?: number | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export default function Home() {
   const images = [
@@ -10,7 +42,11 @@ export default function Home() {
   ];
 
   const [current, setCurrent] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
+
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -18,230 +54,339 @@ export default function Home() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [images.length]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
+    const fetchNews = async () => {
+      try {
+        setIsLoadingNews(true);
+
+        const res = await fetch(`${API_BASE}/api/v1/news/public?limit=8`, {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          setNewsItems([]);
+          return;
+        }
+
+        const data: NewsItem[] = await res.json();
+        setNewsItems(data);
+      } catch {
+        setNewsItems([]);
+      } finally {
+        setIsLoadingNews(false);
+      }
     };
-  }, [mobileMenuOpen]);
 
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+    fetchNews();
+  }, [API_BASE]);
 
-  const navItems = ["Home", "Get Help", "Campaigns", "About"];
+  const quickActions = [
+    {
+      label: "Report",
+      href: "/report",
+      icon: ShieldAlert,
+    },
+    {
+      label: "Help",
+      href: "/help",
+      icon: LifeBuoy,
+    },
+    {
+      label: "Hotline",
+      href: "/contact",
+      icon: PhoneCall,
+    },
+    {
+      label: "Chat",
+      href: "/help",
+      icon: MessageCircleHeart,
+    },
+  ];
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "Recently published";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Recently published";
+
+    return new Intl.DateTimeFormat("en-NG", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const normalized = category.toLowerCase();
+
+    if (
+      normalized.includes("breaking") ||
+      normalized.includes("urgent") ||
+      normalized.includes("emergency")
+    ) {
+      return {
+        label: "Breaking",
+        classes: "bg-red-50 text-red-600 border-red-200",
+      };
+    }
+
+    if (normalized.includes("press")) {
+      return {
+        label: "Press Coverage",
+        classes: "bg-violet-50 text-violet-700 border-violet-200",
+      };
+    }
+
+    if (normalized.includes("rescue")) {
+      return {
+        label: "Rescue Update",
+        classes: "bg-blue-50 text-blue-700 border-blue-200",
+      };
+    }
+
+    if (normalized.includes("campaign")) {
+      return {
+        label: "Campaign",
+        classes: "bg-amber-50 text-amber-700 border-amber-200",
+      };
+    }
+
+    if (normalized.includes("awareness")) {
+      return {
+        label: "Awareness",
+        classes: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      };
+    }
+
+    return {
+      label: category || "Update",
+      classes: "bg-slate-50 text-slate-700 border-slate-200",
+    };
+  };
+
+  const pressCoverage = useMemo(() => {
+    const preferred = newsItems.filter((item) => {
+      const category = item.category.toLowerCase();
+      return (
+        category.includes("press") ||
+        category.includes("rescue") ||
+        category.includes("breaking") ||
+        Boolean(item.external_link)
+      );
+    });
+
+    return preferred.length > 0 ? preferred : newsItems;
+  }, [newsItems]);
+
+  const featuredPress = useMemo(() => {
+    return pressCoverage.find((item) => item.is_featured) || pressCoverage[0];
+  }, [pressCoverage]);
+
+  const secondaryPress = useMemo(() => {
+    if (!featuredPress) return [];
+    return pressCoverage
+      .filter((item) => item.id !== featuredPress.id)
+      .slice(0, 4);
+  }, [pressCoverage, featuredPress]);
 
   return (
     <main className="bg-white text-black overflow-x-hidden">
-      {/* 🔷 NAVBAR */}
-      <nav className="flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 bg-white/60 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        {/* LOGO */}
-        <div className="flex items-center gap-3 sm:gap-4 group cursor-pointer min-w-0">
-          <img
-            src="/logo.png"
-            alt="GAHTO Logo"
-            className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 object-contain drop-shadow-sm shrink-0"
-          />
-
-          <div className="leading-tight min-w-0">
-            <p className="font-extrabold text-xl sm:text-2xl md:text-3xl text-blue-900 tracking-tight group-hover:text-red-600 transition">
-              GAHTO
-            </p>
-            <p className="text-[11px] sm:text-xs text-gray-500 hidden sm:block">
-              Anti Human Trafficking
-            </p>
-          </div>
-        </div>
-
-        {/* DESKTOP NAV */}
-        <div className="hidden md:flex items-center gap-2 lg:gap-3">
-          {navItems.map((item) => {
-            const isActive = item === "Home";
-
-            return (
-              <a
-                key={item}
-                href="#"
-                className={`relative group rounded-full px-3.5 lg:px-4 py-2 text-[13px] lg:text-[14px] font-semibold tracking-[0.015em] transition duration-300 ${
-                  isActive
-                    ? "text-blue-900 bg-white/80 shadow-sm"
-                    : "text-slate-600 hover:text-blue-900"
+      {/* 🔴 HERO */}
+      <section className="relative min-h-[86vh] md:min-h-[92vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="hidden md:block">
+            {images.map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt={`Hero slide ${i + 1}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                  i === current ? "opacity-100" : "opacity-0"
                 }`}
-              >
-                <span>{item}</span>
-                <span
-                  className={`absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] origin-left rounded-full bg-gradient-to-r from-blue-900 to-red-500 transition-transform duration-300 ${
-                    isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                  }`}
-                ></span>
-              </a>
-            );
-          })}
+              />
+            ))}
+          </div>
 
-          <a
-            href="#"
-            className="ml-2 px-4 py-2 rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-md hover:shadow-red-500/40 transition duration-300 font-semibold text-sm"
-          >
-            Report Case
-          </a>
+          <div className="block md:hidden">
+            <img
+              src="/images/hero1.jpg"
+              alt="Human trafficking awareness"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </div>
 
-          <button className="px-5 py-2 rounded-xl bg-blue-900 text-white hover:bg-blue-800 shadow-md hover:shadow-blue-500/40 transition duration-300 font-semibold text-sm">
-            Donate
-          </button>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.18),transparent_30%),radial-gradient(circle_at_left_center,rgba(30,64,175,0.22),transparent_35%)]" />
+          <div className="absolute inset-0 bg-gradient-to-r md:from-black/85 md:via-black/65 md:to-black/25 from-black/90 via-black/80 to-black/65" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </div>
 
-        {/* MOBILE NAV */}
-        <div className="flex md:hidden items-center gap-2">
-          <a
-            href="#"
-            className="px-3 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition"
-          >
-            Report
-          </a>
-
-          <button className="px-3 py-2 rounded-lg text-sm bg-blue-900 text-white hover:bg-blue-800 transition">
-            Donate
-          </button>
-
-          <button
-            type="button"
-            aria-label="Open menu"
-            aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen(true)}
-            className="ml-1 rounded-lg border border-gray-200 bg-white/80 px-3 py-2 text-blue-900 shadow-sm backdrop-blur"
-          >
-            ☰
-          </button>
-        </div>
-      </nav>
-
-      {/* 📱 MOBILE DRAWER */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] md:hidden">
-          <button
-            aria-label="Close menu overlay"
-            onClick={closeMobileMenu}
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-          />
-
-          <div className="absolute right-0 top-0 h-full w-[82%] max-w-[340px] bg-white shadow-2xl border-l p-5 flex flex-col">
-            {/* DRAWER HEADER */}
-            <div className="flex items-center justify-between pb-4 border-b">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src="/logo.png"
-                  alt="GAHTO Logo"
-                  className="h-12 w-12 object-contain shrink-0"
-                />
-
-                <div className="leading-tight min-w-0">
-                  <p className="font-extrabold text-xl text-blue-900 truncate">
-                    GAHTO
-                  </p>
-                  <p className="text-[10px] text-gray-500">
-                    Anti Human Trafficking
-                  </p>
-                </div>
+        <div className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-16 py-16">
+          <div className="max-w-6xl">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[11px] sm:text-xs font-medium uppercase tracking-[0.18em] text-white/90 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
+                <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.9)]" />
+                Safe. Confidential. Actionable.
               </div>
 
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={closeMobileMenu}
-                className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-700 hover:bg-gray-50 transition"
-              >
-                ✕
-              </button>
+              <h1 className="mt-6 text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.02] tracking-tight text-white">
+                Stand Against
+                <br />
+                <span className="text-white">Human Trafficking.</span>
+                <br />
+                <span className="bg-gradient-to-r from-red-500 via-red-400 to-orange-300 bg-clip-text text-transparent drop-shadow-[0_0_16px_rgba(239,68,68,0.35)]">
+                  Report. Protect. Restore.
+                </span>
+              </h1>
+
+              <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-200/95 max-w-2xl leading-relaxed">
+                GAHTO provides a secure platform for reporting cases,
+                accessing urgent support, and strengthening the collective
+                response against human trafficking through awareness,
+                advocacy, and survivor-centered action.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                {[
+                  "Anonymous reporting",
+                  "Emergency response support",
+                  "Community awareness",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-md"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap gap-4">
+                <Link
+                  href="/report"
+                  className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-7 py-3.5 rounded-xl shadow-lg hover:shadow-red-500/40 hover:scale-[1.03] active:scale-95 transition duration-300 font-semibold w-full sm:w-auto text-center"
+                >
+                  <ShieldAlert className="h-5 w-5" />
+                  <span>Report a Case</span>
+                </Link>
+
+                <Link
+                  href="/help"
+                  className="inline-flex items-center justify-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-7 py-3.5 rounded-xl shadow-lg hover:shadow-blue-500/40 hover:scale-[1.03] active:scale-95 transition duration-300 font-semibold w-full sm:w-auto text-center"
+                >
+                  <Siren className="h-5 w-5" />
+                  <span>Get Help</span>
+                </Link>
+
+                <Link
+                  href="/donate"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/30 text-white backdrop-blur-md bg-white/10 hover:bg-white hover:text-black hover:scale-[1.03] active:scale-95 transition duration-300 font-semibold w-full sm:w-auto text-center"
+                >
+                  <HeartHandshake className="h-5 w-5" />
+                  <span>Support the Mission</span>
+                </Link>
+              </div>
             </div>
 
-            {/* LINKS */}
-            <div className="mt-6 flex flex-col gap-2">
-              {navItems.map((item) => (
-                <a
-                  key={item}
-                  href="#"
-                  onClick={closeMobileMenu}
-                  className="rounded-xl px-4 py-3 text-base font-medium hover:bg-blue-50 text-gray-800 transition"
-                >
-                  {item}
-                </a>
+            <div className="mt-10 md:mt-14 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-5 max-w-5xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    value: "24/7",
+                    label: "Safe reporting access",
+                  },
+                  {
+                    value: "Fast",
+                    label: "Connection to help pathways",
+                  },
+                  {
+                    value: "Trusted",
+                    label: "Survivor-focused response",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)]"
+                  >
+                    <p className="text-2xl sm:text-3xl font-bold text-white">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-200 leading-relaxed">
+                      {item.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-5 sm:p-6 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
+                <p className="text-xs uppercase tracking-[0.22em] text-red-300 font-semibold">
+                  Need immediate support?
+                </p>
+                <h3 className="mt-3 text-xl sm:text-2xl font-bold text-white">
+                  You are not alone.
+                </h3>
+                <p className="mt-3 text-sm sm:text-base text-gray-200 leading-relaxed">
+                  If you or someone you know is at risk, use our reporting and
+                  help channels immediately. Every report can lead to protection,
+                  intervention, and hope.
+                </p>
+
+                <div className="mt-5 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-white text-black px-5 py-3 font-semibold hover:bg-gray-100 transition text-center"
+                  >
+                    <PhoneCall className="h-4 w-4" />
+                    <span>Contact Support</span>
+                  </Link>
+                  <Link
+                    href="/about"
+                    className="w-full sm:w-auto rounded-xl border border-white/25 text-white px-5 py-3 font-semibold hover:bg-white/10 transition text-center"
+                  >
+                    Learn More
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-2 mt-8">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Go to slide ${i + 1}`}
+                  onClick={() => setCurrent(i)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    i === current
+                      ? "w-10 bg-red-500"
+                      : "w-2.5 bg-white/40 hover:bg-white/70"
+                  }`}
+                />
               ))}
             </div>
-
-            {/* CTA */}
-            <div className="mt-auto pt-6 space-y-3">
-              <a
-                href="#"
-                onClick={closeMobileMenu}
-                className="block w-full bg-red-600 text-white py-3 rounded-xl text-center font-semibold hover:bg-red-700 transition"
-              >
-                Report Case
-              </a>
-
-              <button className="block w-full bg-blue-900 text-white py-3 rounded-xl font-semibold hover:bg-blue-800 transition">
-                Donate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔴 HERO */}
-      <section className="relative min-h-[82vh] md:h-[88vh] flex items-center">
-        <div className="absolute inset-0">
-          {images.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt={`Hero slide ${i + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                i === current ? "opacity-100" : "opacity-0"
-              }`}
-            />
-          ))}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/20"></div>
-        </div>
-
-        <div className="relative z-10 px-4 sm:px-6 md:px-16 max-w-4xl text-white">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-            Report Human Trafficking.
-            <br />
-            <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.5)]">
-              Get Help. Save Lives.
-            </span>
-          </h1>
-
-          <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-200 max-w-2xl leading-relaxed">
-            A safe and anonymous platform to report cases, access urgent help,
-            and support the fight against human trafficking.
-          </p>
-
-          <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap gap-4">
-            <button className="bg-red-600 hover:bg-red-700 text-white px-7 py-3.5 rounded-xl shadow-lg hover:shadow-red-500/40 hover:scale-105 active:scale-95 transition duration-300 font-semibold w-full sm:w-auto">
-              🚨 Report a Case
-            </button>
-
-            <button className="bg-blue-900 hover:bg-blue-800 text-white px-7 py-3.5 rounded-xl shadow-lg hover:shadow-blue-500/40 hover:scale-105 active:scale-95 transition duration-300 font-semibold w-full sm:w-auto">
-              🆘 Get Help
-            </button>
-
-            <button className="px-7 py-3.5 rounded-xl border border-white/40 text-white backdrop-blur-md bg-white/10 hover:bg-white hover:text-black hover:scale-105 active:scale-95 transition duration-300 font-semibold w-full sm:w-auto">
-              🤝 Support the Mission
-            </button>
           </div>
         </div>
       </section>
 
       {/* ⚡ QUICK ACTION */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4 sm:px-6 py-10 bg-gray-50 text-center">
-        {["🚨 Report", "🆘 Help", "📞 Hotline", "💬 Chat"].map((item) => (
-          <div
-            key={item}
-            className="p-5 bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 flex items-center justify-center gap-2 font-medium"
-          >
-            {item}
-          </div>
-        ))}
+        {quickActions.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group p-5 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col items-center justify-center gap-3 font-medium"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-red-50 text-blue-900 group-hover:scale-110 transition">
+                <Icon className="h-5 w-5" />
+              </div>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
       </section>
 
       {/* 📊 IMPACT */}
@@ -287,8 +432,178 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 📰 PRESS COVERAGE */}
+      <section className="bg-gray-50 py-16 sm:py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-600">
+              In the News
+            </p>
+            <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-gray-950">
+              Press coverage and documented impact
+            </h2>
+            <p className="mt-4 text-gray-600 leading-relaxed">
+              Explore media coverage, rescue updates, public advocacy, and
+              documented reporting around GAHTO’s work across vulnerable communities.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            {isLoadingNews ? (
+              <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div className="inline-flex items-center gap-3 text-gray-600">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading press coverage...</span>
+                </div>
+              </div>
+            ) : featuredPress ? (
+              <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6 sm:gap-8">
+                <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+                  <div className="relative min-h-[260px] sm:min-h-[340px] bg-gradient-to-br from-blue-950 via-blue-900 to-black">
+                    {featuredPress.featured_image_url ? (
+                      <img
+                        src={featuredPress.featured_image_url}
+                        alt={featuredPress.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : null}
+
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
+
+                    <div className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8">
+                      <span
+                        className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                          getCategoryLabel(featuredPress.category).classes
+                        } bg-white/95`}
+                      >
+                        {getCategoryLabel(featuredPress.category).label}
+                      </span>
+
+                      <h3 className="mt-4 text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+                        {featuredPress.title}
+                      </h3>
+
+                      <p className="mt-3 text-sm sm:text-base text-gray-200">
+                        {formatDate(
+                          featuredPress.published_at || featuredPress.created_at
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 sm:p-8">
+                    <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
+                      {featuredPress.excerpt ||
+                        featuredPress.headline ||
+                        featuredPress.content.slice(0, 180) + "..."}
+                    </p>
+
+                    <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                      <Link
+                        href={`/news`}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold text-gray-900 hover:bg-gray-50 transition"
+                      >
+                        <span>View all updates</span>
+                      </Link>
+
+                      {featuredPress.external_link ? (
+                        <a
+                          href={featuredPress.external_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800 transition"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          <span>Read coverage</span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={`/news`}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800 transition"
+                        >
+                          <span>Read update</span>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-5">
+                  {secondaryPress.length > 0 ? (
+                    secondaryPress.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg transition duration-300"
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                              getCategoryLabel(item.category).classes
+                            }`}
+                          >
+                            {getCategoryLabel(item.category).label}
+                          </span>
+
+                          <span className="text-xs text-gray-500">
+                            {formatDate(item.published_at || item.created_at)}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-4 text-lg sm:text-xl font-bold text-gray-900">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-3 text-sm sm:text-base text-gray-600 leading-relaxed">
+                          {item.excerpt ||
+                            item.headline ||
+                            item.content.slice(0, 120) + "..."}
+                        </p>
+
+                        <div className="mt-5">
+                          {item.external_link ? (
+                            <a
+                              href={item.external_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 text-sm font-semibold text-blue-900 hover:text-blue-700 transition"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Read coverage</span>
+                            </a>
+                          ) : (
+                            <Link
+                              href="/news"
+                              className="inline-flex items-center gap-2 text-sm font-semibold text-blue-900 hover:text-blue-700 transition"
+                            >
+                              <span>Read update</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                      <p className="text-gray-600">
+                        More press stories and coverage will appear here as updates are published.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                <p className="text-gray-600">
+                  No published press coverage yet. Once media updates are added from admin,
+                  they will appear here automatically.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* 🧠 HOW IT WORKS */}
-      <section className="bg-gray-50 py-16 px-4 sm:px-6 text-center">
+      <section className="bg-white py-16 px-4 sm:px-6 text-center">
         <h2 className="text-2xl font-bold mb-10">How It Works</h2>
 
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
@@ -301,7 +616,7 @@ export default function Home() {
               key={index}
               className="group p-6 rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl hover:shadow-blue-500/10 transition duration-300 hover:-translate-y-2 relative overflow-hidden text-left"
             >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-br from-blue-500/10 to-red-500/10"></div>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-br from-blue-500/10 to-red-500/10" />
 
               <h3 className="font-semibold text-lg relative z-10">
                 {item.title}
@@ -324,13 +639,21 @@ export default function Home() {
         </p>
 
         <div className="flex justify-center gap-4 flex-col sm:flex-row flex-wrap">
-          <button className="bg-blue-900 hover:bg-blue-800 hover:scale-105 active:scale-95 text-white px-6 py-3 rounded-lg shadow-lg transition duration-200 w-full sm:w-auto">
-            Get Help Now
-          </button>
+          <Link
+            href="/help"
+            className="inline-flex items-center justify-center gap-2 bg-blue-900 hover:bg-blue-800 hover:scale-105 active:scale-95 text-white px-6 py-3 rounded-lg shadow-lg transition duration-200 w-full sm:w-auto text-center"
+          >
+            <Siren className="h-4 w-4" />
+            <span>Get Help Now</span>
+          </Link>
 
-          <button className="border border-gray-300 hover:bg-black hover:text-white hover:scale-105 active:scale-95 px-6 py-3 rounded-lg transition duration-200 w-full sm:w-auto">
-            Chat Assistant
-          </button>
+          <Link
+            href="/help"
+            className="inline-flex items-center justify-center gap-2 border border-gray-300 hover:bg-black hover:text-white hover:scale-105 active:scale-95 px-6 py-3 rounded-lg transition duration-200 w-full sm:w-auto text-center"
+          >
+            <MessageCircleHeart className="h-4 w-4" />
+            <span>Chat Assistant</span>
+          </Link>
         </div>
       </section>
 
@@ -344,9 +667,13 @@ export default function Home() {
           Your contribution helps rescue victims and raise awareness.
         </p>
 
-        <button className="bg-red-600 hover:bg-red-700 hover:scale-105 active:scale-95 text-white px-8 py-3 rounded-lg shadow-lg transition duration-200 w-full sm:w-auto">
-          Donate Now
-        </button>
+        <Link
+          href="/donate"
+          className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 hover:scale-105 active:scale-95 text-white px-8 py-3 rounded-lg shadow-lg transition duration-200 w-full sm:w-auto text-center"
+        >
+          <HeartHandshake className="h-4 w-4" />
+          <span>Donate Now</span>
+        </Link>
       </section>
 
       {/* FOOTER */}
@@ -354,6 +681,24 @@ export default function Home() {
         <p className="text-sm sm:text-base">
           © GAHTO - Global Anti Human Trafficking Organisation
         </p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/80">
+          <Link href="/about" className="hover:text-white transition">
+            About
+          </Link>
+          <Link href="/campaigns" className="hover:text-white transition">
+            Campaigns
+          </Link>
+          <Link href="/help" className="hover:text-white transition">
+            Get Help
+          </Link>
+          <Link href="/contact" className="hover:text-white transition">
+            Contact
+          </Link>
+          <Link href="/donate" className="hover:text-white transition">
+            Donate
+          </Link>
+        </div>
       </footer>
     </main>
   );
