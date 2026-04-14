@@ -120,6 +120,32 @@ export default function CampaignsPage() {
     return ShieldCheck;
   };
 
+  const normalizeImageUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Handle Google Drive images
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    // Return direct image URLs as-is
+    if (/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    // Return other URLs (might be valid)
+    return trimmed;
+  };
+
   const featuredCampaign = useMemo(
     () => campaigns.find((item) => item.is_featured) || campaigns[0],
     [campaigns]
@@ -174,13 +200,16 @@ export default function CampaignsPage() {
           <div className="max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-8 items-stretch rounded-[2rem] border border-slate-200 bg-white shadow-sm overflow-hidden">
               <div className="relative min-h-[280px] lg:min-h-full bg-gradient-to-br from-blue-950 via-blue-900 to-black">
-                {featuredCampaign.image_url ? (
-                  <img
-                    src={featuredCampaign.image_url}
-                    alt={featuredCampaign.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : null}
+                {(() => {
+                  const featuredImageUrl = normalizeImageUrl(featuredCampaign?.image_url);
+                  return featuredImageUrl ? (
+                    <img
+                      src={featuredImageUrl}
+                      alt={featuredCampaign.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null;
+                })()}
 
                 <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-black/60" />
 

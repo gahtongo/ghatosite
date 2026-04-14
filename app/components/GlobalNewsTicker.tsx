@@ -215,6 +215,58 @@ export default function GlobalNewsTicker() {
     }).format(date);
   };
 
+  const normalizeImageUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Handle Google Drive images
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    // Return direct image URLs as-is
+    if (/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    // Return other URLs (might be valid)
+    return trimmed;
+  };
+
+  const normalizeVideoUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Handle Google Drive videos
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    // Return direct video URLs as-is
+    if (/\.(mp4|webm|mov|avi|mkv|flv|m3u8)($|\?)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    // Return other URLs (might be YouTube or valid link)
+    return trimmed;
+  };
+
   const openNewsModal = async (slug: string) => {
     try {
       setIsLoadingNews(true);
@@ -420,21 +472,26 @@ export default function GlobalNewsTicker() {
               <div>
                 {(selectedNews.featured_image_url || selectedNews.video_url) && (
                   <div className="relative">
-                    {selectedNews.video_url ? (
-                      <video
-                        src={selectedNews.video_url}
-                        controls
-                        playsInline
-                        className="h-[240px] w-full bg-black object-cover sm:h-[340px]"
-                        poster={selectedNews.featured_image_url || undefined}
-                      />
-                    ) : (
-                      <img
-                        src={selectedNews.featured_image_url || ""}
-                        alt={selectedNews.title}
-                        className="h-[240px] w-full object-cover sm:h-[340px]"
-                      />
-                    )}
+                    {(() => {
+                      const videoUrl = normalizeVideoUrl(selectedNews.video_url);
+                      const imageUrl = normalizeImageUrl(selectedNews.featured_image_url);
+                      
+                      return videoUrl ? (
+                        <video
+                          src={videoUrl}
+                          controls
+                          playsInline
+                          className="h-[240px] w-full bg-black object-cover sm:h-[340px]"
+                          poster={imageUrl || undefined}
+                        />
+                      ) : imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={selectedNews.title}
+                          className="h-[240px] w-full object-cover sm:h-[340px]"
+                        />
+                      ) : null;
+                    })()}
                   </div>
                 )}
 

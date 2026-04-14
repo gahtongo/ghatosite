@@ -296,23 +296,55 @@ export default function AdminNewsPage() {
     };
   }, [items]);
 
-  const normalizeMediaUrl = (url?: string | null) => {
+  const normalizeImageUrl = (url?: string | null) => {
     if (!url) return null;
 
     const trimmed = url.trim();
-
     if (!trimmed) return null;
 
+    // Handle Google Drive images
     if (trimmed.includes("drive.google.com")) {
       const fileIdMatch =
-        trimmed.match(/\/d\/([^/]+)/) ||
-        trimmed.match(/[?&]id=([^&]+)/);
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
 
       if (fileIdMatch?.[1]) {
         return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
       }
     }
 
+    // Return direct image URLs as-is
+    if (/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    // Return other URLs (might be valid)
+    return trimmed;
+  };
+
+  const normalizeVideoUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Handle Google Drive videos
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    // Return direct video URLs as-is
+    if (/\.(mp4|webm|mov|avi|mkv|flv|m3u8)($|\?)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    // Return other URLs (might be YouTube or valid link)
     return trimmed;
   };
 
@@ -322,9 +354,49 @@ export default function AdminNewsPage() {
     const trimmed = url.trim();
     if (!trimmed) return null;
 
-    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    // Extract video ID from various YouTube URL formats
+    let videoId = null;
+
+    // youtu.be/VIDEO_ID or youtu.be/VIDEO_ID?...
+    let match = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
     if (match?.[1]) {
-      return `https://www.youtube-nocookie.com/embed/${match[1]}`;
+      videoId = match[1];
+    }
+
+    // youtube.com/watch?v=VIDEO_ID
+    if (!videoId) {
+      match = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+      if (match?.[1]) {
+        videoId = match[1];
+      }
+    }
+
+    // youtube.com/embed/VIDEO_ID
+    if (!videoId) {
+      match = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
+      if (match?.[1]) {
+        videoId = match[1];
+      }
+    }
+
+    // youtube.com/v/VIDEO_ID
+    if (!videoId) {
+      match = trimmed.match(/\/v\/([a-zA-Z0-9_-]{11})/i);
+      if (match?.[1]) {
+        videoId = match[1];
+      }
+    }
+
+    // youtube.com/shorts/VIDEO_ID
+    if (!videoId) {
+      match = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+      if (match?.[1]) {
+        videoId = match[1];
+      }
+    }
+
+    if (videoId) {
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
 
     return null;
@@ -336,9 +408,9 @@ export default function AdminNewsPage() {
     return match?.[1] ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
   };
 
-  const previewImageUrl = normalizeMediaUrl(form.featured_image_url);
+  const previewImageUrl = normalizeImageUrl(form.featured_image_url);
   const previewYouTubeUrl = normalizeYouTubeEmbedUrl(form.video_url);
-  const previewVideoUrl = previewYouTubeUrl ? null : normalizeMediaUrl(form.video_url);
+  const previewVideoUrl = previewYouTubeUrl ? null : normalizeVideoUrl(form.video_url);
   const previewYouTubeThumbnail = getYouTubeThumbnailUrl(previewYouTubeUrl);
   const [isYouTubePreviewOpen, setIsYouTubePreviewOpen] = useState(false);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
