@@ -96,6 +96,20 @@ export default function NewsPage() {
     return trimmed;
   };
 
+  const normalizeYouTubeEmbedUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    if (match?.[1]) {
+      return `https://www.youtube-nocookie.com/embed/${match[1]}`;
+    }
+
+    return null;
+  };
+
   const getCategoryLabel = (category: string) => {
     const normalized = category.toLowerCase();
 
@@ -303,6 +317,7 @@ export default function NewsPage() {
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
               {otherNews.map((item) => {
                 const itemVideoUrl = normalizeMediaUrl(item.video_url);
+                const itemYouTubeUrl = normalizeYouTubeEmbedUrl(item.video_url);
                 const itemImageUrl = normalizeMediaUrl(item.featured_image_url);
 
                 return (
@@ -320,6 +335,14 @@ export default function NewsPage() {
                           preload="metadata"
                           poster={itemImageUrl || undefined}
                           className="h-full w-full object-cover"
+                        />
+                      ) : itemYouTubeUrl ? (
+                        <iframe
+                          src={itemYouTubeUrl}
+                          title={item.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="h-full w-full"
                         />
                       ) : itemImageUrl ? (
                         <img

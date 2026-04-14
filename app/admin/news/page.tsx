@@ -316,8 +316,35 @@ export default function AdminNewsPage() {
     return trimmed;
   };
 
+  const normalizeYouTubeEmbedUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([A-Za-z0-9_-]{11})/);
+    if (match?.[1]) {
+      return `https://www.youtube-nocookie.com/embed/${match[1]}`;
+    }
+
+    return null;
+  };
+
+  const getYouTubeThumbnailUrl = (embedUrl?: string | null) => {
+    if (!embedUrl) return null;
+    const match = embedUrl.match(/\/embed\/([A-Za-z0-9_-]{11})/);
+    return match?.[1] ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+  };
+
   const previewImageUrl = normalizeMediaUrl(form.featured_image_url);
   const previewVideoUrl = normalizeMediaUrl(form.video_url);
+  const previewYouTubeUrl = normalizeYouTubeEmbedUrl(form.video_url);
+  const previewYouTubeThumbnail = getYouTubeThumbnailUrl(previewYouTubeUrl);
+  const [isYouTubePreviewOpen, setIsYouTubePreviewOpen] = useState(false);
+
+  useEffect(() => {
+    setIsYouTubePreviewOpen(false);
+  }, [previewYouTubeUrl, previewVideoUrl]);
 
   return (
     <div className="space-y-6">
@@ -598,7 +625,7 @@ export default function AdminNewsPage() {
                 Video URL
               </label>
               <p className="mb-2 text-xs text-slate-500">
-                Use a direct video link or a Google Drive file link that points to the actual file.
+                Use a direct video link, a Google Drive file link, or a YouTube URL.
               </p>
               <input
                 type="text"
@@ -611,7 +638,7 @@ export default function AdminNewsPage() {
                 <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
                   <p className="font-semibold text-slate-800">Normalized video URL</p>
                   <p className="mt-1 break-all text-slate-600">
-                    {previewVideoUrl || "Unable to normalize Drive file link. Check the URL format."}
+                    {previewVideoUrl || previewYouTubeUrl || "Unable to normalize the provided video URL. Check the URL format."}
                   </p>
                 </div>
               ) : null}
@@ -624,6 +651,42 @@ export default function AdminNewsPage() {
                     preload="metadata"
                     className="h-40 w-full object-cover"
                   />
+                </div>
+              )}
+
+              {!previewVideoUrl && previewYouTubeUrl && (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  {previewYouTubeThumbnail && !isYouTubePreviewOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsYouTubePreviewOpen(true)}
+                      className="relative block h-40 w-full overflow-hidden text-left"
+                    >
+                      <img
+                        src={previewYouTubeThumbnail}
+                        alt="YouTube thumbnail"
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/30" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-blue-900 shadow-lg">
+                          ▶
+                        </span>
+                      </div>
+                      <div className="absolute bottom-3 left-3 right-3 text-xs text-white/90">
+                        <p className="font-semibold">YouTube preview available</p>
+                        <p>Click to load preview</p>
+                      </div>
+                    </button>
+                  ) : (
+                    <iframe
+                      src={previewYouTubeUrl}
+                      title="YouTube preview"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="h-40 w-full"
+                    />
+                  )}
                 </div>
               )}
             </div>
