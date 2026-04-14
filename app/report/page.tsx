@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function ReportPage() {
@@ -17,9 +17,17 @@ export default function ReportPage() {
   const [urgency, setUrgency] = useState("Urgent");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [incidentTime, setIncidentTime] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [evidenceFileName, setEvidenceFileName] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [evidencePreviewUrl, setEvidencePreviewUrl] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordingError, setRecordingError] = useState("");
+  const [locationStatus, setLocationStatus] = useState<"idle" | "pending" | "granted" | "denied" | "error">("idle");
+  const [locationMessage, setLocationMessage] = useState("");
 
   const [reporterName, setReporterName] = useState("");
   const [reporterEmail, setReporterEmail] = useState("");
@@ -29,10 +37,184 @@ export default function ReportPage() {
     window.location.replace("https://www.google.com");
   };
 
-  const handleEvidenceChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setEvidenceFileName(file ? file.name : "");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
+
+  const createEvidencePreview = (file: File) => {
+    if (evidencePreviewUrl) {
+      URL.revokeObjectURL(evidencePreviewUrl);
+    }
+
+    const url = URL.createObjectURL(file);
+    setEvidenceFile(file);
+    setEvidenceFileName(file.name);
+    setEvidencePreviewUrl(url);
+    setRecordingError("");
   };
+
+  const validateAndSetEvidenceFile = (file: File) => {
+    if (file.type.startsWith("video/")) {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.src = url;
+
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+
+        if (video.duration && video.duration > 25) {
+          setRecordingError("Video evidence must be 25 seconds or less.");
+          setEvidenceFile(null);
+          setEvidenceFileName("");
+          setEvidencePreviewUrl(null);
+          return;
+        }
+
+        createEvidencePreview(file);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        setRecordingError("Unable to read selected video evidence.");
+        setEvidenceFile(null);
+        setEvidenceFileName("");
+        setEvidencePreviewUrl(null);
+      };
+    } else {
+      createEvidencePreview(file);
+    }
+  };
+
+  const handleEvidenceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (!file) {
+      setEvidenceFile(null);
+      setEvidenceFileName("");
+      setEvidencePreviewUrl(null);
+      return;
+    }
+
+    validateAndSetEvidenceFile(file);
+  };
+
+  const captureCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationStatus("error");
+      setLocationMessage("Location is not available in this browser.");
+      return;
+    }
+
+    setLocationStatus("pending");
+    setLocationMessage("Waiting for permission to access your location...");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCapturedLocation({ latitude, longitude });
+        setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        setLocationStatus("granted");
+        setLocationMessage("Location captured successfully.");
+      },
+      (error) => {
+        setLocationStatus("denied");
+        setLocationMessage(
+          error.code === error.PERMISSION_DENIED
+            ? "Location access denied. Enter location manually."
+            : "Unable to capture location. Enter it manually."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (recordingTimerRef.current !== null) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    setRecording(false);
+    setRecordingSeconds(0);
+  };
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setRecordingError("Live video capture is not supported by this browser.");
+      return;
+    }
+
+    try {
+      setRecordingError("");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { facingMode: "environment" },
+      });
+
+      recordingChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordingChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+
+        const blob = new Blob(recordingChunksRef.current, {
+          type: recordingChunksRef.current[0]?.type || "video/webm",
+        });
+        const file = new File([blob], `live-video-${Date.now()}.webm`, {
+          type: blob.type,
+        });
+
+        validateAndSetEvidenceFile(file);
+        setRecording(false);
+      };
+
+      recorder.start();
+      setRecording(true);
+      setRecordingSeconds(0);
+
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds((prev) => {
+          const next = prev + 1;
+          if (next >= 25) {
+            stopRecording();
+          }
+          return next;
+        });
+      }, 1000);
+    } catch {
+      setRecordingError("Unable to access camera or microphone for live video capture.");
+      setRecording(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (evidencePreviewUrl) {
+        URL.revokeObjectURL(evidencePreviewUrl);
+      }
+      if (recordingTimerRef.current !== null) {
+        window.clearInterval(recordingTimerRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, [evidencePreviewUrl]);
 
   const getReporterLabel = () => {
     if (isAnonymous) return "Anonymous";
@@ -55,6 +237,7 @@ export default function ReportPage() {
     setUrgency("Urgent");
     setDescription("");
     setLocation("");
+    setCapturedLocation(null);
     setIncidentTime("");
     setAdditionalNotes("");
     setEvidenceFileName("");
@@ -75,7 +258,9 @@ export default function ReportPage() {
         case_type: caseType,
         urgency,
         description,
-        location: location || null,
+        location: capturedLocation
+          ? `${capturedLocation.latitude.toFixed(6)}, ${capturedLocation.longitude.toFixed(6)}`
+          : location || null,
         incident_time: incidentTime || null,
         additional_notes: additionalNotes || null,
         is_anonymous: isAnonymous,
@@ -84,7 +269,7 @@ export default function ReportPage() {
         reporter_phone: isAnonymous ? null : reporterPhone || null,
       };
 
-      const res = await fetch(`${API_BASE}/api/v1/reports`, {
+      const backendResponse = await fetch(`${API_BASE}/api/v1/reports`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,11 +277,39 @@ export default function ReportPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const backendData = await backendResponse.json();
 
-      if (!res.ok) {
-        setSubmitError(data.detail || "Unable to submit your report right now.");
+      if (!backendResponse.ok) {
+        setSubmitError(backendData.detail || "Unable to submit your report right now.");
         return;
+      }
+
+      if (evidenceFile) {
+        const jotformData = new FormData();
+        jotformData.append('q2_q2_dropdown0', caseType);
+        jotformData.append('q3_q3_radio1', urgency);
+        jotformData.append('q4_q4_textarea2', description);
+        jotformData.append('q5_q5_textbox3', capturedLocation
+          ? `${capturedLocation.latitude.toFixed(6)}, ${capturedLocation.longitude.toFixed(6)}`
+          : location || '');
+        jotformData.append('q6_q6_textbox4', incidentTime);
+        jotformData.append('q7_q7_textarea5', additionalNotes);
+        if (isAnonymous) {
+          jotformData.append('q8_q8_checkbox6[]', 'Submit this report anonymously');
+        }
+        jotformData.append('q9_q9_textbox7', reporterName);
+        jotformData.append('q10_q10_textbox8', reporterEmail);
+        jotformData.append('q11_q11_textbox9', reporterPhone);
+        jotformData.append('q12_q12_fileupload10[]', evidenceFile);
+
+        // Fire-and-forget JotForm upload; JotForm may not support CORS response information.
+        fetch('https://submit.jotform.com/261035879342057', {
+          method: 'POST',
+          body: jotformData,
+          mode: 'no-cors',
+        }).catch(() => {
+          // Ignore JotForm upload failures so backend success remains primary.
+        });
       }
 
       setSubmitSuccess(true);
@@ -295,13 +508,38 @@ export default function ReportPage() {
           <h2 className="text-2xl font-bold text-gray-900">Location & Evidence</h2>
 
           <div className="mt-8 space-y-6 rounded-2xl border bg-gray-50 p-6">
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="City or location"
-              className="w-full rounded-lg border px-4 py-3"
-            />
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  setCapturedLocation(null);
+                }}
+                placeholder="City or location"
+                className="w-full rounded-lg border px-4 py-3"
+              />
+
+              <button
+                type="button"
+                onClick={captureCurrentLocation}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-blue-900 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-800"
+              >
+                Capture current location from this device
+              </button>
+
+              {locationMessage ? (
+                <p className={`text-sm ${locationStatus === "granted" ? "text-emerald-600" : "text-red-600"}`}>
+                  {locationMessage}
+                </p>
+              ) : null}
+
+              {capturedLocation ? (
+                <p className="text-sm text-slate-500">
+                  Captured location: {capturedLocation.latitude.toFixed(6)}, {capturedLocation.longitude.toFixed(6)}
+                </p>
+              ) : null}
+            </div>
 
             <input
               type="text"
@@ -311,10 +549,40 @@ export default function ReportPage() {
               className="w-full rounded-lg border px-4 py-3"
             />
 
-            <div className="rounded-xl border-2 border-dashed p-4 text-center">
-              <input type="file" onChange={handleEvidenceChange} />
+            <div className="rounded-xl border-2 border-dashed p-4 text-center space-y-4">
+              <p className="text-sm text-gray-600">
+                Upload evidence or record live video. Video must be 25 seconds or shorter.
+              </p>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                onChange={handleEvidenceChange}
+                className="mx-auto"
+              />
+
+              <button
+                type="button"
+                onClick={recording ? stopRecording : startRecording}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                {recording ? `Recording ${recordingSeconds}s` : "Record live video (25s max)"}
+              </button>
+
+              {recordingError && (
+                <p className="text-sm text-red-600">{recordingError}</p>
+              )}
+
               {evidenceFileName && (
                 <p className="mt-2 text-sm text-green-600">✓ {evidenceFileName} selected</p>
+              )}
+
+              {evidencePreviewUrl && (
+                <video
+                  src={evidencePreviewUrl}
+                  controls
+                  className="mx-auto mt-3 max-h-52 w-full rounded-xl"
+                />
               )}
             </div>
 

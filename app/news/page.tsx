@@ -76,6 +76,16 @@ export default function NewsPage() {
     }).format(date);
   };
 
+  const normalizeGoogleDriveUrl = (trimmed: string, isVideo = false) => {
+    const fileIdMatch =
+      trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+      trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+    if (!fileIdMatch?.[1]) return null;
+    const exportType = isVideo ? "download" : "view";
+    return `https://drive.google.com/uc?export=${exportType}&id=${fileIdMatch[1]}`;
+  };
+
   const normalizeImageUrl = (url?: string | null) => {
     if (!url) return null;
 
@@ -84,13 +94,8 @@ export default function NewsPage() {
 
     // Handle Google Drive images
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, false);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct image URLs as-is
@@ -98,7 +103,6 @@ export default function NewsPage() {
       return trimmed;
     }
 
-    // Return other URLs (might be valid)
     return trimmed;
   };
 
@@ -110,13 +114,8 @@ export default function NewsPage() {
 
     // Handle Google Drive videos
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, true);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct video URLs as-is
@@ -124,7 +123,6 @@ export default function NewsPage() {
       return trimmed;
     }
 
-    // Only support direct video sources here.
     return null;
   };
 
@@ -311,7 +309,7 @@ export default function NewsPage() {
                   ) : null;
                 })()}
 
-                <div className="absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
 
                 <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 pb-16">
                   <div>

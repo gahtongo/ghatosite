@@ -296,6 +296,16 @@ export default function AdminNewsPage() {
     };
   }, [items]);
 
+  const normalizeGoogleDriveUrl = (trimmed: string, isVideo = false) => {
+    const fileIdMatch =
+      trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+      trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+    if (!fileIdMatch?.[1]) return null;
+    const exportType = isVideo ? "download" : "view";
+    return `https://drive.google.com/uc?export=${exportType}&id=${fileIdMatch[1]}`;
+  };
+
   const normalizeImageUrl = (url?: string | null) => {
     if (!url) return null;
 
@@ -304,13 +314,8 @@ export default function AdminNewsPage() {
 
     // Handle Google Drive images
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, false);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct image URLs as-is
@@ -318,7 +323,6 @@ export default function AdminNewsPage() {
       return trimmed;
     }
 
-    // Return other URLs (might be valid)
     return trimmed;
   };
 
@@ -330,13 +334,8 @@ export default function AdminNewsPage() {
 
     // Handle Google Drive videos
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, true);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct video URLs as-is
@@ -344,8 +343,7 @@ export default function AdminNewsPage() {
       return trimmed;
     }
 
-    // Return other URLs (might be YouTube or valid link)
-    return trimmed;
+    return null;
   };
 
   const normalizeYouTubeEmbedUrl = (url?: string | null) => {

@@ -255,6 +255,16 @@ export default function GlobalNewsTicker() {
     }).format(date);
   };
 
+  const normalizeGoogleDriveUrl = (trimmed: string, isVideo = false) => {
+    const fileIdMatch =
+      trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+      trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+    if (!fileIdMatch?.[1]) return null;
+    const exportType = isVideo ? "download" : "view";
+    return `https://drive.google.com/uc?export=${exportType}&id=${fileIdMatch[1]}`;
+  };
+
   const normalizeImageUrl = (url?: string | null) => {
     if (!url) return null;
 
@@ -263,13 +273,8 @@ export default function GlobalNewsTicker() {
 
     // Handle Google Drive images
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, false);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct image URLs as-is
@@ -277,7 +282,6 @@ export default function GlobalNewsTicker() {
       return trimmed;
     }
 
-    // Return other URLs (might be valid)
     return trimmed;
   };
 
@@ -289,13 +293,8 @@ export default function GlobalNewsTicker() {
 
     // Handle Google Drive videos
     if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
-        trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
+      const driveUrl = normalizeGoogleDriveUrl(trimmed, true);
+      if (driveUrl) return driveUrl;
     }
 
     // Return direct video URLs as-is
