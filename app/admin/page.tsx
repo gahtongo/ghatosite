@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuthApi } from "../../../hooks/useAuthApi";
+import { useAuthApi } from "@/hooks/useAuthApi";
 import {
   AlertTriangle,
   FileWarning,

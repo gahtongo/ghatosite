@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useAuthApi } from "../../../hooks/useAuthApi";
+import { useAuthApi } from "@/hooks/useAuthApi";
 import {
   CheckCircle2,
   Loader2,

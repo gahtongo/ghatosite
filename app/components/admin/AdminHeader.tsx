@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAuthApi } from "../../../hooks/useAuthApi";
+import { useAuthApi } from "@/hooks/useAuthApi";
 import { Bell, Loader2, Search } from "lucide-react";
 import AdminNotificationsPanel, {
   type AdminNotificationItem,
