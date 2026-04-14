@@ -76,6 +76,26 @@ export default function NewsPage() {
     }).format(date);
   };
 
+  const normalizeMediaUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+
+    if (!trimmed) return null;
+
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([^/]+)/) ||
+        trimmed.match(/[?&]id=([^&]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    return trimmed;
+  };
+
   const getCategoryLabel = (category: string) => {
     const normalized = category.toLowerCase();
 
@@ -170,13 +190,26 @@ export default function NewsPage() {
           ) : featuredNews ? (
             <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-8 items-stretch rounded-[2rem] overflow-hidden border border-slate-200 bg-white shadow-sm">
               <div className="relative min-h-[280px] lg:min-h-full bg-gradient-to-br from-blue-950 via-blue-900 to-black">
-                {featuredNews.featured_image_url ? (
-                  <img
-                    src={featuredNews.featured_image_url}
-                    alt={featuredNews.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : null}
+                {(() => {
+                  const featuredVideoUrl = normalizeMediaUrl(featuredNews?.video_url);
+                  const featuredImageUrl = normalizeMediaUrl(featuredNews?.featured_image_url);
+
+                  return featuredVideoUrl ? (
+                    <video
+                      src={featuredVideoUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : featuredImageUrl ? (
+                    <img
+                      src={featuredImageUrl}
+                      alt={featuredNews.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null;
+                })()}
 
                 <div className="absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
 
@@ -263,24 +296,36 @@ export default function NewsPage() {
         <div className="max-w-6xl mx-auto">
           {otherNews.length > 0 ? (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
-              {otherNews.map((item) => (
-                <article
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm hover:shadow-xl transition duration-300"
-                >
-                  <div className="relative h-52 bg-gradient-to-br from-slate-100 to-slate-200">
-                    {item.featured_image_url ? (
-                      <img
-                        src={item.featured_image_url}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-500">
-                        <Newspaper className="h-10 w-10" />
-                      </div>
-                    )}
-                  </div>
+              {otherNews.map((item) => {
+                const itemVideoUrl = normalizeMediaUrl(item.video_url);
+                const itemImageUrl = normalizeMediaUrl(item.featured_image_url);
+
+                return (
+                  <article
+                    key={item.id}
+                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm hover:shadow-xl transition duration-300"
+                  >
+                    <div className="relative h-52 bg-gradient-to-br from-slate-100 to-slate-200">
+                      {itemVideoUrl ? (
+                        <video
+                          src={itemVideoUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : itemImageUrl ? (
+                        <img
+                          src={itemImageUrl}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-slate-500">
+                          <Newspaper className="h-10 w-10" />
+                        </div>
+                      )}
+                    </div>
 
                   <div className="p-5 sm:p-6">
                     <div className="flex flex-wrap items-center gap-3">
@@ -324,7 +369,8 @@ export default function NewsPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           ) : !isLoading && featuredNews ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">

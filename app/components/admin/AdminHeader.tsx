@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAuthApi } from "../../../hooks/useAuthApi";
 import { Bell, Loader2, Search } from "lucide-react";
 import AdminNotificationsPanel, {
   type AdminNotificationItem,
@@ -38,10 +39,7 @@ export default function AdminHeader() {
 
   const searchTimerRef = useRef<number | null>(null);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const pageTitle = useMemo(() => {
     if (pathname === "/admin") return "Dashboard";
@@ -54,15 +52,10 @@ export default function AdminHeader() {
   }, [pathname]);
 
   const fetchUnreadCount = async () => {
-    if (!token) return;
-
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/admin/notifications/unread-count`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           cache: "no-store",
         }
       );
@@ -77,15 +70,10 @@ export default function AdminHeader() {
   };
 
   const fetchNotifications = async () => {
-    if (!token) return;
-
     try {
       setIsNotificationsLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/v1/admin/notifications?limit=10`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await authFetch(`${API_BASE}/api/v1/admin/notifications?limit=10`, {
         cache: "no-store",
       });
 
@@ -102,9 +90,8 @@ export default function AdminHeader() {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchUnreadCount();
-  }, [API_BASE, token]);
+  }, [API_BASE]);
 
   useEffect(() => {
     if (!isNotificationsOpen) return;
@@ -125,19 +112,14 @@ export default function AdminHeader() {
     }
 
     searchTimerRef.current = window.setTimeout(async () => {
-      if (!token) return;
-
       try {
         setIsSearchLoading(true);
 
-        const res = await fetch(
+        const res = await authFetch(
           `${API_BASE}/api/v1/admin/search?q=${encodeURIComponent(
             searchQuery
           )}&limit_per_group=6`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
             cache: "no-store",
           }
         );
@@ -167,21 +149,16 @@ export default function AdminHeader() {
         window.clearTimeout(searchTimerRef.current);
       }
     };
-  }, [API_BASE, isSearchOpen, searchQuery, token]);
+  }, [API_BASE, isSearchOpen, searchQuery]);
 
   const handleMarkNotificationRead = async (id: number) => {
-    if (!token) return;
-
     try {
       setMarkingNotificationId(id);
 
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/admin/notifications/${id}/read`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 

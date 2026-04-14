@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuthApi } from "../../hooks/useAuthApi";
 import {
   CheckCircle2,
   Globe,
@@ -100,10 +101,7 @@ export default function AdminSettingsPage() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const [settings, setSettings] = useState<SettingsMap>({});
   const [loading, setLoading] = useState(true);
@@ -117,12 +115,7 @@ export default function AdminSettingsPage() {
       setErrorText("");
       setStatusText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/settings/admin`, {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : undefined,
+      const res = await authFetch(`${API_BASE}/api/v1/settings/admin`, {
         cache: "no-store",
       });
 
@@ -172,11 +165,10 @@ export default function AdminSettingsPage() {
       setStatusText("");
       setErrorText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/settings/admin/${key}`, {
+      const res = await authFetch(`${API_BASE}/api/v1/settings/admin/${key}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           value: setting.value,

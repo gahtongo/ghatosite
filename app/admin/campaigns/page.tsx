@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuthApi } from "../../hooks/useAuthApi";
 import {
   CalendarDays,
   CheckCircle2,
@@ -72,10 +73,7 @@ export default function AdminCampaignsPage() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [form, setForm] = useState<CampaignFormState>(initialForm);
@@ -102,10 +100,7 @@ export default function AdminCampaignsPage() {
       setIsLoading(true);
       setErrorText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/campaigns/admin/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await authFetch(`${API_BASE}/api/v1/campaigns/admin/all`, {
         cache: "no-store",
       });
 
@@ -127,9 +122,8 @@ export default function AdminCampaignsPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchCampaigns();
-  }, [API_BASE, token]);
+  }, [API_BASE]);
 
   const stats = useMemo(() => {
     return {
@@ -246,11 +240,10 @@ export default function AdminCampaignsPage() {
         end_date: form.end_date || null,
       };
 
-      const res = await fetch(`${API_BASE}/api/v1/campaigns/admin`, {
+      const res = await authFetch(`${API_BASE}/api/v1/campaigns/admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -301,13 +294,12 @@ export default function AdminCampaignsPage() {
         end_date: editForm.end_date || null,
       };
 
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/campaigns/admin/${editingCampaignId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         }
@@ -341,13 +333,10 @@ export default function AdminCampaignsPage() {
       setStatusText("");
       setErrorText("");
 
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/campaigns/admin/${campaignId}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -373,13 +362,12 @@ export default function AdminCampaignsPage() {
       setStatusText("");
       setErrorText("");
 
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/campaigns/admin/${campaign.id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             is_featured: !campaign.is_featured,

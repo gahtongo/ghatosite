@@ -72,6 +72,41 @@ export default function DonatePage() {
           </div>
 
           <div className="mt-10 grid lg:grid-cols-3 gap-6">
+            {/* BANK TRANSFER */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl transition duration-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <Landmark className="h-5 w-5" />
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold text-gray-900">
+                Bank Transfer
+              </h3>
+              <p className="mt-3 text-gray-600 text-sm sm:text-base leading-relaxed">
+                Prefer a direct transfer? You can support GAHTO through our bank
+                details below and retain bank-based giving as an alternative.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-gray-50 p-4 sm:p-5 space-y-3 text-sm sm:text-base">
+                <p>
+                  <strong>Bank Name:</strong> First Bank of Nigeria
+                </p>
+                <p>
+                  <strong>Account Number:</strong> 2034925346
+                </p>
+                <p>
+                  <strong>Account Name:</strong> Global Anti Human Trafficking Organization
+                </p>
+                <p>
+                  <strong>Swift Code:</strong> FBNINGLA
+                </p>
+              </div>
+
+              <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3.5 font-semibold text-gray-900 hover:bg-gray-50 transition">
+                <Building2 className="h-4 w-4" />
+                <span>Use Bank Transfer</span>
+              </button>
+            </div>
+
             {/* PAYSTACK */}
             <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl transition duration-300">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-600">
@@ -120,41 +155,6 @@ export default function DonatePage() {
               <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-900 px-5 py-3.5 font-semibold text-white hover:bg-blue-800 transition">
                 <Globe className="h-4 w-4" />
                 <span>Donate via Stripe</span>
-              </button>
-            </div>
-
-            {/* BANK TRANSFER */}
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl transition duration-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-                <Landmark className="h-5 w-5" />
-              </div>
-
-              <h3 className="mt-5 text-xl font-bold text-gray-900">
-                Bank Transfer
-              </h3>
-              <p className="mt-3 text-gray-600 text-sm sm:text-base leading-relaxed">
-                Prefer a direct transfer? You can support GAHTO through our bank
-                details below and retain bank-based giving as an alternative.
-              </p>
-
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-gray-50 p-4 sm:p-5 space-y-3 text-sm sm:text-base">
-                <p>
-                  <strong>Bank Name:</strong> First Bank of Nigeria
-                </p>
-                <p>
-                  <strong>Account Number:</strong> 2034925346
-                </p>
-                <p>
-                  <strong>Account Name:</strong> Global Anti Human Trafficking Organization
-                </p>
-                <p>
-                  <strong>Swift Code:</strong> FBNINGLA
-                </p>
-              </div>
-
-              <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3.5 font-semibold text-gray-900 hover:bg-gray-50 transition">
-                <Building2 className="h-4 w-4" />
-                <span>Use Bank Transfer</span>
               </button>
             </div>
           </div>

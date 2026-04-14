@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuthApi } from "../../hooks/useAuthApi";
 import {
   AlertTriangle,
   FileWarning,
@@ -31,18 +32,14 @@ export default function AdminDashboardPage() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
+  const authFetch = useAuthApi();
+
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
 
-        const token = localStorage.getItem("gahto_admin_token");
-        if (!token) return;
-
-        const res = await fetch(`${API_BASE}/api/v1/admin/dashboard`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await authFetch(`${API_BASE}/api/v1/admin/dashboard`, {
           cache: "no-store",
         });
 

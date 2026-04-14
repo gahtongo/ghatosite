@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useAuthApi } from "../../../hooks/useAuthApi";
 import {
   CheckCircle2,
   Loader2,
@@ -80,20 +81,14 @@ export default function AdminNewsPage() {
     ticker: string;
   }>(null);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const fetchNews = async () => {
     try {
       setIsLoading(true);
       setErrorText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/news/admin/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await authFetch(`${API_BASE}/api/v1/news/admin/all`, {
         cache: "no-store",
       });
 
@@ -113,9 +108,8 @@ export default function AdminNewsPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchNews();
-  }, [API_BASE, token]);
+  }, [API_BASE]);
 
   const resetForm = () => {
     setForm(initialForm);
@@ -166,11 +160,8 @@ export default function AdminNewsPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/news/admin/${id}`, {
+      const res = await authFetch(`${API_BASE}/api/v1/news/admin/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       const data = await res.json();
@@ -222,11 +213,10 @@ export default function AdminNewsPage() {
 
       const method = editingId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -305,6 +295,29 @@ export default function AdminNewsPage() {
       ticker: items.filter((item) => item.show_in_ticker).length,
     };
   }, [items]);
+
+  const normalizeMediaUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+
+    if (!trimmed) return null;
+
+    if (trimmed.includes("drive.google.com")) {
+      const fileIdMatch =
+        trimmed.match(/\/d\/([^/]+)/) ||
+        trimmed.match(/[?&]id=([^&]+)/);
+
+      if (fileIdMatch?.[1]) {
+        return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+      }
+    }
+
+    return trimmed;
+  };
+
+  const previewImageUrl = normalizeMediaUrl(form.featured_image_url);
+  const previewVideoUrl = normalizeMediaUrl(form.video_url);
 
   return (
     <div className="space-y-6">
@@ -551,6 +564,9 @@ export default function AdminNewsPage() {
               <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Featured Image URL
               </label>
+              <p className="mb-2 text-xs text-slate-500">
+                Use a direct image link or a Google Drive file link.
+              </p>
               <input
                 type="text"
                 value={form.featured_image_url}
@@ -558,12 +574,24 @@ export default function AdminNewsPage() {
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-900"
                 placeholder="https://..."
               />
+              {previewImageUrl && (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  <img
+                    src={previewImageUrl}
+                    alt="Featured preview"
+                    className="h-40 w-full object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Video URL
               </label>
+              <p className="mb-2 text-xs text-slate-500">
+                Use a direct video link or a Google Drive file link that points to the actual file.
+              </p>
               <input
                 type="text"
                 value={form.video_url}
@@ -571,6 +599,17 @@ export default function AdminNewsPage() {
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-900"
                 placeholder="https://..."
               />
+              {previewVideoUrl && (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  <video
+                    src={previewVideoUrl}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="h-40 w-full object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             <div>

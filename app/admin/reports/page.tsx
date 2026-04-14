@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuthApi } from "../../hooks/useAuthApi";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -54,10 +55,7 @@ export default function AdminReportsPage() {
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const fetchReports = async () => {
     try {
@@ -77,10 +75,7 @@ export default function AdminReportsPage() {
       const query = params.toString();
       const url = `${API_BASE}/api/v1/reports/admin${query ? `?${query}` : ""}`;
 
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await authFetch(url, {
         cache: "no-store",
       });
 
@@ -102,9 +97,8 @@ export default function AdminReportsPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchReports();
-  }, [API_BASE, token, statusFilter, urgencyFilter]);
+  }, [API_BASE, statusFilter, urgencyFilter]);
 
   const handleStatusUpdate = async (
     reportId: number,
@@ -115,11 +109,10 @@ export default function AdminReportsPage() {
       setStatusText("");
       setErrorText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/reports/admin/${reportId}`, {
+      const res = await authFetch(`${API_BASE}/api/v1/reports/admin/${reportId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ status: nextStatus }),
       });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuthApi } from "../../hooks/useAuthApi";
 import {
   CheckCircle2,
   Loader2,
@@ -29,20 +30,14 @@ export default function AdminMessagesPage() {
   const [errorText, setErrorText] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gahto_admin_token")
-      : null;
+  const authFetch = useAuthApi();
 
   const fetchMessages = async () => {
     try {
       setIsLoading(true);
       setErrorText("");
 
-      const res = await fetch(`${API_BASE}/api/v1/contact-messages/admin`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await authFetch(`${API_BASE}/api/v1/contact-messages/admin`, {
         cache: "no-store",
       });
 
@@ -62,9 +57,8 @@ export default function AdminMessagesPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchMessages();
-  }, [API_BASE, token]);
+  }, [API_BASE]);
 
   const handleStatusUpdate = async (messageId: number, status: string) => {
     try {
@@ -72,13 +66,12 @@ export default function AdminMessagesPage() {
       setStatusText("");
       setErrorText("");
 
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/contact-messages/admin/${messageId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status }),
         }
