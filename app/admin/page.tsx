@@ -120,21 +120,21 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <>
-          <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((card) => {
               const Icon = card.icon;
 
               return (
                 <div
                   key={card.label}
-                  className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                  className="rounded-[1.75rem] border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-slate-500">
                         {card.label}
                       </p>
-                      <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                      <p className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">
                         {card.value}
                       </p>
                     </div>
@@ -150,10 +150,10 @@ export default function AdminDashboardPage() {
             })}
           </section>
 
-          <section className="grid gap-5 lg:grid-cols-3">
+          <section className="grid gap-4 lg:grid-cols-3">
             <Link
               href="/admin/news"
-              className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               <p className="text-lg font-bold text-slate-900">Manage News</p>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
 
             <Link
               href="/admin/settings"
-              className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               <p className="text-lg font-bold text-slate-900">Manage Settings</p>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">

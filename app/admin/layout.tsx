@@ -13,6 +13,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const isPublicAdminRoute = useMemo(() => {
     return (
@@ -53,10 +54,13 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AdminSidebar />
+      <AdminSidebar
+        mobileOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+      />
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-72">
-        <AdminHeader />
+        <AdminHeader onOpenMobileNav={() => setIsMobileNavOpen(true)} />
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>

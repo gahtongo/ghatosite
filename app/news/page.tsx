@@ -89,7 +89,7 @@ export default function NewsPage() {
         trimmed.match(/[?&]id=([^&]+)/);
 
       if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
       }
     }
 

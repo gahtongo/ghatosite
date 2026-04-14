@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuthApi } from "@/hooks/useAuthApi";
-import { Bell, Loader2, Search } from "lucide-react";
+import { Bell, Loader2, Menu, Search } from "lucide-react";
 import AdminNotificationsPanel, {
   type AdminNotificationItem,
 } from "./AdminNotificationsPanel";
@@ -18,7 +18,11 @@ const emptyResults: AdminSearchResults = {
   campaigns: [],
 };
 
-export default function AdminHeader() {
+export default function AdminHeader({
+  onOpenMobileNav,
+}: {
+  onOpenMobileNav: () => void;
+}) {
   const pathname = usePathname();
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
@@ -201,13 +205,23 @@ export default function AdminHeader() {
     <>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              GAHTO Admin
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-              {pageTitle}
-            </h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onOpenMobileNav}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 lg:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                GAHTO Admin
+              </p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+                {pageTitle}
+              </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
