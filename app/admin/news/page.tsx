@@ -574,6 +574,14 @@ export default function AdminNewsPage() {
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-900"
                 placeholder="https://..."
               />
+              {form.featured_image_url.trim() ? (
+                <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-800">Normalized image URL</p>
+                  <p className="mt-1 break-all text-slate-600">
+                    {previewImageUrl || "Unable to normalize Drive file link. Check the URL format."}
+                  </p>
+                </div>
+              ) : null}
               {previewImageUrl && (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <img
@@ -599,6 +607,14 @@ export default function AdminNewsPage() {
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-900"
                 placeholder="https://..."
               />
+              {form.video_url.trim() ? (
+                <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-800">Normalized video URL</p>
+                  <p className="mt-1 break-all text-slate-600">
+                    {previewVideoUrl || "Unable to normalize Drive file link. Check the URL format."}
+                  </p>
+                </div>
+              ) : null}
               {previewVideoUrl && (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <video

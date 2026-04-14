@@ -199,7 +199,10 @@ export default function NewsPage() {
                       src={featuredVideoUrl}
                       controls
                       playsInline
+                      muted
+                      autoPlay
                       preload="metadata"
+                      poster={featuredImageUrl || undefined}
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   ) : featuredImageUrl ? (
@@ -213,8 +216,9 @@ export default function NewsPage() {
 
                 <div className="absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
 
-                <div className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8">
-                  <span
+                <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 pb-16">
+                  <div>
+                    <span
                     className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
                       getCategoryLabel(featuredNews.category).classes
                     } bg-white/95`}
@@ -233,6 +237,7 @@ export default function NewsPage() {
                   </p>
                 </div>
               </div>
+            </div>
 
               <div className="p-6 sm:p-8 flex flex-col justify-center">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-900">
@@ -311,7 +316,9 @@ export default function NewsPage() {
                           src={itemVideoUrl}
                           controls
                           playsInline
+                          muted
                           preload="metadata"
+                          poster={itemImageUrl || undefined}
                           className="h-full w-full object-cover"
                         />
                       ) : itemImageUrl ? (
@@ -369,8 +376,8 @@ export default function NewsPage() {
                     </div>
                   </div>
                 </article>
-                );
-              })}
+              );
+            })}
             </div>
           ) : !isLoading && featuredNews ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
