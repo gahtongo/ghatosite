@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAuthApi } from "../../hooks/useAuthApi";
+import { useAuthApi } from "../../../hooks/useAuthApi";
 import {
   CalendarDays,
   CheckCircle2,
