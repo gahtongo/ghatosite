@@ -337,13 +337,15 @@ export default function AdminNewsPage() {
   };
 
   const previewImageUrl = normalizeMediaUrl(form.featured_image_url);
-  const previewVideoUrl = normalizeMediaUrl(form.video_url);
   const previewYouTubeUrl = normalizeYouTubeEmbedUrl(form.video_url);
+  const previewVideoUrl = previewYouTubeUrl ? null : normalizeMediaUrl(form.video_url);
   const previewYouTubeThumbnail = getYouTubeThumbnailUrl(previewYouTubeUrl);
   const [isYouTubePreviewOpen, setIsYouTubePreviewOpen] = useState(false);
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
 
   useEffect(() => {
     setIsYouTubePreviewOpen(false);
+    setShowVideoPreview(false);
   }, [previewYouTubeUrl, previewVideoUrl]);
 
   return (
@@ -642,7 +644,21 @@ export default function AdminNewsPage() {
                   </p>
                 </div>
               ) : null}
-              {previewVideoUrl && (
+
+              {(previewVideoUrl || previewYouTubeUrl) && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoPreview(true)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition"
+                  >
+                    ▶
+                    <span>Show video preview</span>
+                  </button>
+                </div>
+              )}
+
+              {showVideoPreview && previewVideoUrl && (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   <video
                     src={previewVideoUrl}
@@ -654,7 +670,7 @@ export default function AdminNewsPage() {
                 </div>
               )}
 
-              {!previewVideoUrl && previewYouTubeUrl && (
+              {showVideoPreview && !previewVideoUrl && previewYouTubeUrl && (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                   {previewYouTubeThumbnail && !isYouTubePreviewOpen ? (
                     <button
