@@ -52,6 +52,9 @@ export default function GlobalNewsTicker() {
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const offsetRef = useRef(0);
+  const mobileTrackWrapperRef = useRef<HTMLDivElement | null>(null);
+  const mobileAnimationFrameRef = useRef<number | null>(null);
+  const mobileLastTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchTicker = async () => {
@@ -147,7 +150,44 @@ export default function GlobalNewsTicker() {
       lastTimeRef.current = null;
     };
   }, [tickerLoop, isTickerPaused]);
+  useEffect(() => {
+    const track = mobileTrackWrapperRef.current;
+    if (!track || tickerLoop.length === 0) return;
 
+    const speed = 48;
+
+    const step = (time: number) => {
+      if (!track) return;
+
+      if (mobileLastTimeRef.current === null) {
+        mobileLastTimeRef.current = time;
+      }
+
+      const delta = (time - mobileLastTimeRef.current) / 1000;
+      mobileLastTimeRef.current = time;
+
+      if (!isTickerPaused) {
+        track.scrollLeft += speed * delta;
+      }
+
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      if (maxScroll > 0 && track.scrollLeft >= maxScroll) {
+        track.scrollLeft = 0;
+      }
+
+      mobileAnimationFrameRef.current = window.requestAnimationFrame(step);
+    };
+
+    mobileAnimationFrameRef.current = window.requestAnimationFrame(step);
+
+    return () => {
+      if (mobileAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(mobileAnimationFrameRef.current);
+      }
+      mobileAnimationFrameRef.current = null;
+      mobileLastTimeRef.current = null;
+    };
+  }, [tickerLoop, isTickerPaused]);
   const getCategoryStyles = (category: string) => {
     const normalized = category.toLowerCase();
 
@@ -263,8 +303,35 @@ export default function GlobalNewsTicker() {
       return trimmed;
     }
 
-    // Return other URLs (might be YouTube or valid link)
-    return trimmed;
+    // Only support direct video sources here.
+    return null;
+  };
+
+  const normalizeYouTubeEmbedUrl = (url?: string | null) => {
+    if (!url) return null;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    let videoId = null;
+
+    const patterns = [
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/i,
+      /[?&]v=([a-zA-Z0-9_-]{11})/i,
+      /\/embed\/([a-zA-Z0-9_-]{11})/i,
+      /\/v\/([a-zA-Z0-9_-]{11})/i,
+      /\/shorts\/([a-zA-Z0-9_-]{11})/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = trimmed.match(pattern);
+      if (match?.[1]) {
+        videoId = match[1];
+        break;
+      }
+    }
+
+    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
   };
 
   const openNewsModal = async (slug: string) => {
@@ -401,7 +468,7 @@ export default function GlobalNewsTicker() {
               Live Updates
             </div>
 
-            <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={mobileTrackWrapperRef} className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <div className="flex w-max items-stretch gap-3 pb-1">
                 {tickerLoop.length > 0 ? (
                   renderTickerSet(tickerLoop, "mobile", "mobile")
@@ -473,10 +540,19 @@ export default function GlobalNewsTicker() {
                 {(selectedNews.featured_image_url || selectedNews.video_url) && (
                   <div className="relative">
                     {(() => {
+                      const selectedYouTubeUrl = normalizeYouTubeEmbedUrl(selectedNews.video_url);
                       const videoUrl = normalizeVideoUrl(selectedNews.video_url);
                       const imageUrl = normalizeImageUrl(selectedNews.featured_image_url);
-                      
-                      return videoUrl ? (
+
+                      return selectedYouTubeUrl ? (
+                        <iframe
+                          src={selectedYouTubeUrl}
+                          title={selectedNews.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="h-[240px] w-full bg-black object-cover sm:h-[340px]"
+                        />
+                      ) : videoUrl ? (
                         <video
                           src={videoUrl}
                           controls

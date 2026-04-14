@@ -124,8 +124,8 @@ export default function NewsPage() {
       return trimmed;
     }
 
-    // Return other URLs (might be YouTube or valid link)
-    return trimmed;
+    // Only support direct video sources here.
+    return null;
   };
 
   const normalizeYouTubeEmbedUrl = (url?: string | null) => {
@@ -182,25 +182,7 @@ export default function NewsPage() {
     return null;
   };
 
-  const normalizeMediaUrl = (url?: string | null) => {
-    if (!url) return null;
 
-    const trimmed = url.trim();
-
-    if (!trimmed) return null;
-
-    if (trimmed.includes("drive.google.com")) {
-      const fileIdMatch =
-        trimmed.match(/\/d\/([^/]+)/) ||
-        trimmed.match(/[?&]id=([^&]+)/);
-
-      if (fileIdMatch?.[1]) {
-        return `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-      }
-    }
-
-    return trimmed;
-  };
 
   const getCategoryLabel = (category: string) => {
     const normalized = category.toLowerCase();
@@ -297,11 +279,19 @@ export default function NewsPage() {
             <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-8 items-stretch rounded-[2rem] overflow-hidden border border-slate-200 bg-white shadow-sm">
               <div className="relative min-h-[280px] lg:min-h-full bg-gradient-to-br from-blue-950 via-blue-900 to-black">
                 {(() => {
-                  const featuredVideoUrl = normalizeVideoUrl(featuredNews?.video_url);
                   const featuredYouTubeUrl = normalizeYouTubeEmbedUrl(featuredNews?.video_url);
+                  const featuredVideoUrl = normalizeVideoUrl(featuredNews?.video_url);
                   const featuredImageUrl = normalizeImageUrl(featuredNews?.featured_image_url);
 
-                  return featuredVideoUrl ? (
+                  return featuredYouTubeUrl ? (
+                    <iframe
+                      src={featuredYouTubeUrl}
+                      title={featuredNews.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  ) : featuredVideoUrl ? (
                     <video
                       src={featuredVideoUrl}
                       controls
@@ -311,14 +301,6 @@ export default function NewsPage() {
                       preload="metadata"
                       poster={featuredImageUrl || undefined}
                       className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  ) : featuredYouTubeUrl ? (
-                    <iframe
-                      src={featuredYouTubeUrl}
-                      title={featuredNews.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      className="absolute inset-0 h-full w-full"
                     />
                   ) : featuredImageUrl ? (
                     <img
@@ -427,7 +409,15 @@ export default function NewsPage() {
                     className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm hover:shadow-xl transition duration-300"
                   >
                     <div className="relative h-52 bg-gradient-to-br from-slate-100 to-slate-200">
-                      {itemVideoUrl ? (
+                      {itemYouTubeUrl ? (
+                        <iframe
+                          src={itemYouTubeUrl}
+                          title={item.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="h-full w-full"
+                        />
+                      ) : itemVideoUrl ? (
                         <video
                           src={itemVideoUrl}
                           controls
@@ -436,14 +426,6 @@ export default function NewsPage() {
                           preload="metadata"
                           poster={itemImageUrl || undefined}
                           className="h-full w-full object-cover"
-                        />
-                      ) : itemYouTubeUrl ? (
-                        <iframe
-                          src={itemYouTubeUrl}
-                          title={item.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                          className="h-full w-full"
                         />
                       ) : itemImageUrl ? (
                         <img
