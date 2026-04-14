@@ -178,16 +178,11 @@ export default function AdminHeader() {
   };
 
   const handleMarkAllNotificationsRead = async () => {
-    if (!token) return;
-
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `${API_BASE}/api/v1/admin/notifications/mark-all-read`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
