@@ -65,6 +65,9 @@ export default function CampaignsPage() {
       }
     };
 
+    fetchCampaigns();
+  }, [API_BASE]);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isDescriptionModalOpen) {
