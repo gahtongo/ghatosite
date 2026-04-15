@@ -210,6 +210,22 @@ export default function ContactPage() {
             </p>
           </div>
 
+          {/* Office Addresses Section */}
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Ado Office</h3>
+              <p className="text-gray-700 text-sm">2 Onola Balemo Quarters<br />Ado Ekiti</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Abuja Office</h3>
+              <p className="text-gray-700 text-sm">No 4, MukB Estate by A. A. Rano Filling Station<br />along Dape Lifecamp Abuja.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Mali Office</h3>
+              <p className="text-gray-700 text-sm">Bamako, Mali<br />Phone: {maliOfficePhone}</p>
+            </div>
+          </div>
+
           {isLoadingSettings ? (
             <div className="mt-10 flex justify-center">
               <div className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-gray-600 shadow-sm">
