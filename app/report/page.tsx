@@ -269,47 +269,46 @@ export default function ReportPage() {
         reporter_phone: isAnonymous ? null : reporterPhone || null,
       };
 
-      const backendResponse = await fetch(`${API_BASE}/api/v1/reports`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      let response;
+      if (evidenceFile) {
+        const formData = new FormData();
 
-      const backendData = await backendResponse.json();
+        formData.append("case_type", caseType);
+        formData.append("urgency", urgency);
+        formData.append("description", description);
+        formData.append(
+          "location",
+          capturedLocation
+            ? `${capturedLocation.latitude.toFixed(6)}, ${capturedLocation.longitude.toFixed(6)}`
+            : location || ""
+        );
+        formData.append("incident_time", incidentTime);
+        formData.append("additional_notes", additionalNotes);
+        formData.append("is_anonymous", String(isAnonymous));
+        formData.append("reporter_name", reporterName);
+        formData.append("reporter_email", reporterEmail);
+        formData.append("reporter_phone", reporterPhone);
+        formData.append("evidence_file", evidenceFile);
 
-      if (!backendResponse.ok) {
-        setSubmitError(backendData.detail || "Unable to submit your report right now.");
-        return;
+        response = await fetch(`${API_BASE}/api/v1/reports/submit`, {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        response = await fetch(`${API_BASE}/api/v1/reports`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
       }
 
-      if (evidenceFile) {
-        const jotformData = new FormData();
-        jotformData.append('q2_q2_dropdown0', caseType);
-        jotformData.append('q3_q3_radio1', urgency);
-        jotformData.append('q4_q4_textarea2', description);
-        jotformData.append('q5_q5_textbox3', capturedLocation
-          ? `${capturedLocation.latitude.toFixed(6)}, ${capturedLocation.longitude.toFixed(6)}`
-          : location || '');
-        jotformData.append('q6_q6_textbox4', incidentTime);
-        jotformData.append('q7_q7_textarea5', additionalNotes);
-        if (isAnonymous) {
-          jotformData.append('q8_q8_checkbox6[]', 'Submit this report anonymously');
-        }
-        jotformData.append('q9_q9_textbox7', reporterName);
-        jotformData.append('q10_q10_textbox8', reporterEmail);
-        jotformData.append('q11_q11_textbox9', reporterPhone);
-        jotformData.append('q12_q12_fileupload10[]', evidenceFile);
+      const data = await response.json();
 
-        // Fire-and-forget JotForm upload; JotForm may not support CORS response information.
-        fetch('https://submit.jotform.com/261035879342057', {
-          method: 'POST',
-          body: jotformData,
-          mode: 'no-cors',
-        }).catch(() => {
-          // Ignore JotForm upload failures so backend success remains primary.
-        });
+      if (!response.ok) {
+        setSubmitError(data.detail || "Unable to submit your report right now.");
+        return;
       }
 
       setSubmitSuccess(true);

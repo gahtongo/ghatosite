@@ -21,6 +21,7 @@ type ReportItem = {
   location?: string | null;
   incident_time?: string | null;
   additional_notes?: string | null;
+  evidence_url?: string | null;
   is_anonymous: boolean;
   reporter_name?: string | null;
   reporter_email?: string | null;
@@ -484,6 +485,52 @@ export default function AdminReportsPage() {
                               </div>
                             </div>
                           </div>
+
+                          {report.evidence_url ? (
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:col-span-2">
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                Evidence upload
+                              </p>
+                              <div className="mt-3 text-sm text-slate-700">
+                                {report.evidence_url.endsWith(".mp4") ||
+                                report.evidence_url.endsWith(".webm") ||
+                                report.evidence_url.endsWith(".mov") ? (
+                                  <video
+                                    controls
+                                    className="max-h-72 w-full rounded-xl"
+                                    src={`${API_BASE}${report.evidence_url}`}
+                                  />
+                                ) : report.evidence_url.endsWith(".jpg") ||
+                                  report.evidence_url.endsWith(".jpeg") ||
+                                  report.evidence_url.endsWith(".png") ||
+                                  report.evidence_url.endsWith(".gif") ? (
+                                  <img
+                                    src={`${API_BASE}${report.evidence_url}`}
+                                    alt="Evidence"
+                                    className="max-h-72 w-full rounded-xl object-contain"
+                                  />
+                                ) : report.evidence_url.endsWith(".pdf") ? (
+                                  <a
+                                    href={`${API_BASE}${report.evidence_url}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-700 hover:underline"
+                                  >
+                                    Open attached PDF evidence
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={`${API_BASE}${report.evidence_url}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-700 hover:underline"
+                                  >
+                                    Open evidence file
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       )}
                     </div>

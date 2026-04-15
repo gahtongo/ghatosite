@@ -311,7 +311,7 @@ export default function NewsPage() {
 
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/45 via-black/20 to-black/60" />
 
-                <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 pb-16">
+                <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 pb-16">
                   <div>
                     <span
                     className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
