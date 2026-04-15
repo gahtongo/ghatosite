@@ -249,6 +249,10 @@ export default function ReportPage() {
 
   const handleSubmit = async () => {
     if (!description.trim()) return;
+    if (description.trim().length < 10) {
+      setSubmitError("Description must be at least 10 characters long.");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -307,12 +311,24 @@ export default function ReportPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setSubmitError(data.detail || "Unable to submit your report right now.");
+        // Handle validation errors properly
+        if (data.detail) {
+          if (Array.isArray(data.detail)) {
+            // Extract error messages from validation errors
+            const errorMessages = data.detail.map((error: any) => error.msg || error.message || 'Validation error').join(', ');
+            setSubmitError(errorMessages);
+          } else {
+            setSubmitError(data.detail);
+          }
+        } else {
+          setSubmitError("Unable to submit your report right now.");
+        }
         return;
       }
 
       setSubmitSuccess(true);
-    } catch {
+    } catch (error) {
+      console.error('Submission error:', error);
       setSubmitError("Unable to submit your report right now.");
     } finally {
       setIsSubmitting(false);
