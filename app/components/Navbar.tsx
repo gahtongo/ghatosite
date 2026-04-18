@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   HeartHandshake,
-  Menu,
   ShieldAlert,
   X,
-  Newspaper,
+  Menu,
+  Newspaper
 } from "lucide-react";
 
 export default function Navbar() {
@@ -21,6 +21,7 @@ export default function Navbar() {
     { name: "Get Help", href: "/help" },
     { name: "Campaigns", href: "/campaigns" },
     { name: "News", href: "/news" },
+    { name: "Learn", href: "/trafficking" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
@@ -34,6 +35,7 @@ export default function Navbar() {
       document.body.style.overflow = "";
       return;
     }
+
 
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -54,7 +56,8 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-[80] border-b border-gray-200 bg-white/92 backdrop-blur-xl shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="group flex min-w-0 items-center gap-3">
+
+          <Link href="/" className="group flex flex-col sm:flex-row min-w-0 items-start sm:items-center gap-1 sm:gap-3">
             <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-black/5 transition group-hover:shadow-red-500/20 sm:h-20 sm:w-20">
               <Image
                 src="/logo.png"
@@ -66,48 +69,45 @@ export default function Navbar() {
               />
             </div>
 
-            <div className="min-w-0 leading-tight">
-              <p className="text-xl font-extrabold tracking-tight text-red-600 transition group-hover:text-blue-900 sm:text-[2rem]">
+            <div className="min-w-0 leading-tight text-left">
+              <p
+                className="text-xl font-extrabold tracking-tight text-blue-800 transition hover:text-red-600 sm:text-[2rem]"
+              >
                 GAHTO
               </p>
 
-              <p className="block max-w-[180px] truncate text-[11px] leading-tight tracking-wide text-slate-500 sm:max-w-none sm:text-base sm:font-medium">
+              <p className="block text-[11px] leading-tight tracking-wide text-slate-500 sm:text-[15px] sm:font-medium whitespace-normal break-words max-w-[180px] sm:max-w-[220px] md:max-w-[240px] lg:max-w-[260px] text-left">
                 <span className="sm:hidden">Global Anti Human Trafficking Org.</span>
                 <span className="hidden sm:inline">
-                  Global Anti Human Trafficking Organization
+                  Global Anti Human<br />Trafficking Organization
                 </span>
               </p>
             </div>
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex">
+
             {navItems.map((item) => {
               const active = pathname === item.href;
-
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="group relative text-[15px] font-semibold"
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="group relative text-[14px] font-bold tracking-wide px-1 transition-colors duration-200"
                 >
                   <span
-                    className={`transition ${
+                    className={`transition-colors duration-200 ${
                       active
-                        ? "text-blue-900"
-                        : "text-gray-600 group-hover:text-red-600"
+                        ? "text-blue-900 border-b-2 border-red-500 pb-0.5"
+                        : "text-gray-700 hover:text-blue-700"
                     }`}
                   >
                     {item.name}
                   </span>
-
-                  <span
-                    className={`absolute left-0 -bottom-1 h-[2px] rounded-full bg-red-500 transition-all duration-300 ${
-                      active ? "w-full" : "w-0 group-hover:w-full"
-                    }`}
-                  />
                 </Link>
               );
             })}
+
           </nav>
 
           <div className="hidden shrink-0 items-center gap-2 sm:gap-3 md:flex">

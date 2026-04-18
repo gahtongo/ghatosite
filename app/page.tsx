@@ -681,7 +681,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="bg-black text-white py-10 text-center px-4">
         <p className="text-sm sm:text-base">
-          © GAHTO - Global Anti Human Trafficking Organisation
+          © GAHTO - Global Anti Human Trafficking Organization
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/80">
