@@ -402,8 +402,7 @@ export default function ContactPage() {
                 Nigeria Office
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">
-                Suite 4, 4th Floor Aminu Jubril Building, NCCE Building Ralph
-                Sodeinde Street, Central Business District, Abuja
+                2 Onola Balemo Quarters<br />Ado Ekiti
               </p>
               <p className="mt-4 font-semibold text-gray-900">
                 {nigeriaOfficePhone}

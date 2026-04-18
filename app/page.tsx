@@ -61,7 +61,7 @@ export default function Home() {
       try {
         setIsLoadingNews(true);
 
-        const res = await fetch(`${API_BASE}/api/v1/news/public?limit=8`, {
+        const res = await fetch(`${API_BASE}/api/v1/news/public?limit=5`, {
           cache: "no-store",
         });
 
@@ -167,7 +167,9 @@ export default function Home() {
   };
 
   const pressCoverage = useMemo(() => {
-    const preferred = newsItems.filter((item) => {
+    // Only use the 5 most recent news items
+    const limitedNews = newsItems.slice(0, 5);
+    const preferred = limitedNews.filter((item) => {
       const category = item.category.toLowerCase();
       return (
         category.includes("press") ||
@@ -177,7 +179,7 @@ export default function Home() {
       );
     });
 
-    return preferred.length > 0 ? preferred : newsItems;
+    return preferred.length > 0 ? preferred : limitedNews;
   }, [newsItems]);
 
   const featuredPress = useMemo(() => {
