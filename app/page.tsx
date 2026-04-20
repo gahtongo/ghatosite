@@ -346,7 +346,7 @@ export default function Home() {
                     href="/about"
                     className="w-full sm:w-auto rounded-xl border border-white/25 text-white px-5 py-3 font-semibold hover:bg-white/10 transition text-center"
                   >
-                    Learn More
+                    Learn About Trafficking
                   </Link>
                 </div>
               </div>

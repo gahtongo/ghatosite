@@ -21,7 +21,7 @@ export default function Navbar() {
     { name: "Get Help", href: "/help" },
     { name: "Campaigns", href: "/campaigns" },
     { name: "News", href: "/news" },
-    { name: "Learn", href: "/trafficking" },
+    { name: "Trafficking", href: "/trafficking" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
