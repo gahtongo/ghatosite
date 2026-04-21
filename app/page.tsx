@@ -691,6 +691,9 @@ export default function Home() {
           <Link href="/campaigns" className="hover:text-white transition">
             Campaigns
           </Link>
+          <Link href="/trafficking" className="hover:text-white transition">
+            Trafficking
+          </Link>
           <Link href="/help" className="hover:text-white transition">
             Get Help
           </Link>
